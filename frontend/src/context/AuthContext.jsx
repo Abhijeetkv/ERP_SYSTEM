@@ -11,7 +11,14 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +27,9 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           const res = await getMe();
-          setUser(res.data.user || res.data);
+          const userData = res.data.data || res.data;
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
         } catch {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -35,7 +44,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     const res = await loginApi(email, password);
-    const { token: newToken, user: userData } = res.data;
+    const { token: newToken, user: userData } = res.data.data;
+
+    if (!newToken || !userData) {
+      throw new Error('Unexpected login response from server.');
+    }
+
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(userData));
     setToken(newToken);

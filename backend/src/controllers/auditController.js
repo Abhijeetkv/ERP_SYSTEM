@@ -16,7 +16,7 @@ const getAll = async (req, res) => {
       if (endDate) where.createdAt.lte = new Date(endDate);
     }
 
-    const logs = await prisma.audit_logs.findMany({
+    const logs = await prisma.auditLog.findMany({
       where,
       include: {
         changedBy: {
