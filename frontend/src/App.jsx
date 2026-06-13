@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -14,6 +14,21 @@ import ManufacturingOrders from './pages/ManufacturingOrders';
 import StockLedger from './pages/StockLedger';
 import AuditLogs from './pages/AuditLogs';
 import Vendors from './pages/Vendors';
+
+// Smart default redirect based on role
+const DefaultRedirect = () => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+
+  const roleHome = {
+    SALES_USER: '/sales-orders',
+    PURCHASE_USER: '/purchase-orders',
+    MANUFACTURING_USER: '/manufacturing',
+    INVENTORY_MANAGER: '/inventory',
+  };
+
+  return <Navigate to={roleHome[user.role] || '/dashboard'} replace />;
+};
 
 const App = () => {
   return (
@@ -135,9 +150,9 @@ const App = () => {
               }
             />
 
-            {/* Default & catch-all */}
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            {/* Default & catch-all — role-aware redirect */}
+            <Route index element={<DefaultRedirect />} />
+            <Route path="*" element={<DefaultRedirect />} />
           </Route>
         </Routes>
       </BrowserRouter>

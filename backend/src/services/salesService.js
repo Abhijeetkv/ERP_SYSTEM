@@ -35,19 +35,49 @@ const getSalesOrderById = async (id) => {
 };
 
 /**
+ * Generate a unique invoice number: INV-YYYY-XXXXXX
+ */
+const generateInvoiceNo = async () => {
+  const year = new Date().getFullYear();
+  const count = await prisma.salesOrder.count();
+  const seq = String(count + 1).padStart(6, '0');
+  return `INV-${year}-${seq}`;
+};
+
+/**
  * Create a new sales order with lines
  */
-const createSalesOrder = async ({ customerName, lines, createdById }) => {
+const createSalesOrder = async ({
+  customerName,
+  customerPhone,
+  customerAddress,
+  invoiceNo,
+  paymentMethod,
+  paidAmount,
+  notes,
+  lines,
+  createdById,
+}) => {
+  const resolvedInvoiceNo = invoiceNo || (await generateInvoiceNo());
+
   const order = await prisma.$transaction(async (tx) => {
     const so = await tx.salesOrder.create({
       data: {
         customerName,
+        customerPhone: customerPhone || null,
+        customerAddress: customerAddress || null,
+        invoiceNo: resolvedInvoiceNo,
+        paymentMethod: paymentMethod || 'Cash',
+        paidAmount: paidAmount ? parseFloat(paidAmount) : 0,
+        notes: notes || null,
         createdById,
         lines: {
           create: lines.map((line) => ({
             productId: line.productId,
             qty: line.qty,
             unitPrice: line.unitPrice,
+            gstPercent: line.gstPercent ?? 18,
+            discount: line.discount ?? 0,
           })),
         },
       },
@@ -83,12 +113,17 @@ const updateSalesOrder = async (id, data) => {
   if (existing.status !== 'DRAFT') throw new Error('Only DRAFT orders can be updated.');
 
   return prisma.$transaction(async (tx) => {
-    // Update customer name if provided
-    if (data.customerName) {
-      await tx.salesOrder.update({
-        where: { id },
-        data: { customerName: data.customerName },
-      });
+    // Build scalar update payload
+    const scalarUpdate = {};
+    if (data.customerName !== undefined) scalarUpdate.customerName = data.customerName;
+    if (data.customerPhone !== undefined) scalarUpdate.customerPhone = data.customerPhone || null;
+    if (data.customerAddress !== undefined) scalarUpdate.customerAddress = data.customerAddress || null;
+    if (data.paymentMethod !== undefined) scalarUpdate.paymentMethod = data.paymentMethod;
+    if (data.paidAmount !== undefined) scalarUpdate.paidAmount = parseFloat(data.paidAmount) || 0;
+    if (data.notes !== undefined) scalarUpdate.notes = data.notes || null;
+
+    if (Object.keys(scalarUpdate).length > 0) {
+      await tx.salesOrder.update({ where: { id }, data: scalarUpdate });
     }
 
     // Replace lines if provided
@@ -100,6 +135,8 @@ const updateSalesOrder = async (id, data) => {
           productId: line.productId,
           qty: line.qty,
           unitPrice: line.unitPrice,
+          gstPercent: line.gstPercent ?? 18,
+          discount: line.discount ?? 0,
         })),
       });
     }
