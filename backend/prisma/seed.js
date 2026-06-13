@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting seed...');
+  console.log('Starting seed...');
 
   // ─── USERS ───
   const passwordHash = await bcrypt.hash('admin123', 10);
@@ -68,7 +68,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Users seeded');
+  console.log('Users seeded');
 
   // ─── VENDOR ───
   let vendor = await prisma.vendor.findFirst({ where: { name: 'RawMat Suppliers' } });
@@ -81,7 +81,7 @@ async function main() {
       },
     });
   }
-  console.log('✅ Vendor seeded');
+  console.log('Vendor seeded');
 
   // ─── PRODUCTS ───
   const woodenTable = await prisma.product.upsert({
@@ -190,7 +190,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Products seeded');
+  console.log('Products seeded');
 
   // ─── BOM FOR WOODEN TABLE ───
   const existingBom = await prisma.bom.findFirst({
@@ -223,7 +223,7 @@ async function main() {
     bom = existingBom;
   }
 
-  console.log('✅ BoM seeded');
+  console.log('BoM seeded');
 
   // ─── INITIAL STOCK LEDGER ENTRIES ───
   const products = [
@@ -257,13 +257,13 @@ async function main() {
     }
   }
 
-  console.log('✅ Stock ledger entries seeded');
-  console.log('🎉 Seed completed successfully!');
+  console.log('Stock ledger entries seeded');
+  console.log('Seed completed successfully!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    console.error('Seed failed:', e);
     process.exit(1);
   })
   .finally(async () => {
