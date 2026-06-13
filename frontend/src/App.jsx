@@ -1,0 +1,148 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { Toaster } from 'react-hot-toast';
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Products from './pages/Products';
+import SalesOrders from './pages/SalesOrders';
+import PurchaseOrders from './pages/PurchaseOrders';
+import BillOfMaterials from './pages/BillOfMaterials';
+import ManufacturingOrders from './pages/ManufacturingOrders';
+import StockLedger from './pages/StockLedger';
+import AuditLogs from './pages/AuditLogs';
+import Vendors from './pages/Vendors';
+
+const App = () => {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        {/* Global toast notifications */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '14px',
+              borderRadius: '10px',
+              padding: '12px 16px',
+            },
+            success: {
+              iconTheme: { primary: '#22c55e', secondary: '#fff' },
+            },
+            error: {
+              iconTheme: { primary: '#ef4444', secondary: '#fff' },
+            },
+          }}
+        />
+
+        <Routes>
+          {/* Public route */}
+          <Route path="/login" element={<Login />} />
+
+          {/* Protected routes inside Layout */}
+          <Route element={<Layout />}>
+            {/* Dashboard */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute roles={['ADMIN', 'BUSINESS_OWNER']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Products — all roles */}
+            <Route
+              path="/products"
+              element={
+                <ProtectedRoute>
+                  <Products />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Sales Orders */}
+            <Route
+              path="/sales-orders"
+              element={
+                <ProtectedRoute roles={['ADMIN', 'SALES_USER', 'BUSINESS_OWNER']}>
+                  <SalesOrders />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Purchase Orders */}
+            <Route
+              path="/purchase-orders"
+              element={
+                <ProtectedRoute roles={['ADMIN', 'PURCHASE_USER', 'BUSINESS_OWNER']}>
+                  <PurchaseOrders />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Bill of Materials */}
+            <Route
+              path="/bill-of-materials"
+              element={
+                <ProtectedRoute roles={['ADMIN', 'MANUFACTURING_USER', 'BUSINESS_OWNER']}>
+                  <BillOfMaterials />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Manufacturing Orders */}
+            <Route
+              path="/manufacturing"
+              element={
+                <ProtectedRoute roles={['ADMIN', 'MANUFACTURING_USER', 'BUSINESS_OWNER']}>
+                  <ManufacturingOrders />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Inventory / Stock Ledger */}
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute roles={['ADMIN', 'INVENTORY_MANAGER', 'BUSINESS_OWNER']}>
+                  <StockLedger />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Vendors */}
+            <Route
+              path="/vendors"
+              element={
+                <ProtectedRoute roles={['ADMIN', 'PURCHASE_USER', 'BUSINESS_OWNER']}>
+                  <Vendors />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Audit Logs — admin only */}
+            <Route
+              path="/audit-logs"
+              element={
+                <ProtectedRoute roles={['ADMIN']}>
+                  <AuditLogs />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Default & catch-all */}
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+};
+
+export default App;
